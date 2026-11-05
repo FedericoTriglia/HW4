@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HWK4 — Welford's Recurrence & Sampling Simulation</title>
+<style>
+:root{--bg:#0b1220;--panel:#111c2e;--panel2:#16243a;--ink:#edf3fb;--muted:#a9b8cb;--line:#2c3d55;--teal:#55d6be;--blue:#82aaff;--gold:#f5c76b;--red:#f28b82;--green:#91d7a5}
+*{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:radial-gradient(1100px 520px at 80% -15%,#1a3550 0%,transparent 60%),var(--bg);color:var(--ink);font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.wrap{max-width:1180px;margin:auto;padding:34px 22px 64px}.hero{padding:24px 0 26px;border-bottom:1px solid var(--line);margin-bottom:26px}.eyebrow{text-transform:uppercase;letter-spacing:.16em;color:var(--teal);font-size:11px;font-weight:800}.hero h1{font-size:clamp(30px,5vw,48px);line-height:1.08;margin:10px 0 12px;letter-spacing:-.035em}.hero p{color:var(--muted);max-width:780px;margin:0;font-size:16px}.pill{display:inline-flex;padding:5px 10px;border:1px solid #38675f;border-radius:999px;color:#9ce7d9;font-size:12px;margin:16px 6px 0 0}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}.card{background:linear-gradient(180deg,rgba(22,36,58,.96),rgba(17,28,46,.96));border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 12px 28px rgba(0,0,0,.14)}.span12{grid-column:span 12}.span8{grid-column:span 8}.span7{grid-column:span 7}.span6{grid-column:span 6}.span5{grid-column:span 5}.span4{grid-column:span 4}h2{font-size:21px;margin:0 0 12px;letter-spacing:-.02em}h3{font-size:15px;margin:17px 0 7px;color:#dbe7f5}.muted{color:var(--muted)}.equation{font-family:Georgia,'Times New Roman',serif;background:#0c1727;border:1px solid #263b53;border-radius:10px;padding:13px 15px;margin:10px 0;color:#e8f3ff;font-size:17px;overflow-x:auto}.equation strong{color:var(--teal);font-weight:600}.code{background:#091321;border:1px solid #263b53;border-radius:10px;padding:14px 16px;overflow-x:auto;color:#cde5ff;font:13px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre}.code .comment{color:#7f9ab5}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#0c1727;border:1px solid #263b53;border-radius:12px;padding:13px}.stat .k{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}.stat .v{font-size:23px;font-weight:750;margin-top:3px;color:var(--teal);font-variant-numeric:tabular-nums}.stat .sub{font-size:11px;color:var(--muted)}
+.controls{display:grid;grid-template-columns:1fr 1fr 1.3fr auto;gap:12px;align-items:end;margin:14px 0 10px}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}.field input{width:100%;background:#091321;color:var(--ink);border:1px solid #38506b;border-radius:9px;padding:10px 11px;font:inherit;outline:none}.field input:focus{border-color:var(--teal);box-shadow:0 0 0 2px #55d6be22}button{border:0;border-radius:9px;background:var(--teal);color:#07201d;font-weight:800;font:inherit;padding:11px 17px;cursor:pointer;white-space:nowrap}button:hover{filter:brightness(1.08)}button:disabled{opacity:.6;cursor:wait}.note{font-size:12px;color:var(--muted)}.tablewrap{overflow-x:auto;margin-top:12px}table{width:100%;border-collapse:collapse;font-size:13px;min-width:850px}th,td{padding:10px 9px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}th{color:#b9c9dc;font-size:11px;text-transform:uppercase;letter-spacing:.055em;background:#0d1828;position:sticky;top:0}th:first-child,td:first-child{text-align:left}tbody tr:hover{background:#ffffff08}.target{color:var(--teal)}.chart{width:100%;overflow:hidden}.chart svg{width:100%;height:auto;display:block}.legend{display:flex;gap:15px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:7px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(--teal)}.dot.gold{background:var(--gold)}.conclusion{border-left:3px solid var(--teal);padding:3px 0 3px 13px;margin:11px 0;color:#d6e3f1}.small{font-size:12px;color:var(--muted)}.footer{border-top:1px solid var(--line);margin-top:28px;padding-top:18px;color:var(--muted);font-size:12px}
+@media(max-width:850px){.span8,.span7,.span6,.span5,.span4{grid-column:span 12}.controls{grid-template-columns:1fr 1fr}.controls button{grid-column:span 2}.stats{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:520px){.wrap{padding:22px 14px 46px}.controls{grid-template-columns:1fr}.controls button{grid-column:span 1}.stats{grid-template-columns:1fr}.card{padding:16px}}
+
+.pdf-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.pdf-heading h2{margin-bottom:5px}
+.pdf-link{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:9px;background:var(--teal);color:#07201d;text-decoration:none;font-weight:800;white-space:nowrap}
+.pdf-link:hover{filter:brightness(1.08)}
+.pdf-frame{display:block;width:100%;height:900px;background:#fff;border:1px solid var(--line);border-radius:10px}
+@media(max-width:700px){.pdf-frame{height:720px}}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Homework 4 · Online statistics · JavaScript</div>
+    <h1>Welford’s Recurrence<br>& Sampling Distributions</h1>
+    <p>An interactive implementation of Welford’s one-pass algorithm, followed by a Monte Carlo experiment with multiple hackers and systems. Change the simulation size and observe how the sampling distributions tighten as <em>n</em> increases.</p>
+    <span class="pill">Part 1 · Recurrence + code</span><span class="pill">Part 2 · Monte Carlo experiment</span>
+  </header>
+
+  <main class="grid">
+    <section class="card span6">
+      <h2>1. Welford’s recurrence</h2>
+      <p class="muted">After observing <em>x</em><sub>n</sub>, update the count, the running mean, and the sum of squared deviations (often called <em>M</em><sub>2</sub> or SS). Define δ<sub>n</sub> = x<sub>n</sub> − x̄<sub>n−1</sub>.</p>
+      <div class="equation">x̄<sub>n</sub> = x̄<sub>n−1</sub> + δ<sub>n</sub>/n</div>
+      <div class="equation">SS<sub>n</sub> = SS<sub>n−1</sub> + δ<sub>n</sub>(x<sub>n</sub> − x̄<sub>n</sub>) = SS<sub>n−1</sub> + ((n−1)/n)δ<sub>n</sub><sup>2</sup></div>
+      <div class="equation"><strong>s</strong><sup>2</sup><sub>n</sub> = SS<sub>n</sub>/(n−1), &nbsp; n ≥ 2</div>
+      <p class="small">The denominator n−1 gives the unbiased sample variance. At n=1, the sample variance is undefined.</p>
+    </section>
+    <section class="card span6">
+      <h2>Core JavaScript — three update lines</h2>
+      <p class="muted">The state is just <code>count</code>, <code>mean</code>, and <code>M2</code>. No array of previous observations is needed.</p>
+      <div class="code">function add(x) {
+  const delta = x - mean;
+  mean += delta / ++count;
+  M2 += delta * (x - mean);
+}
+
+const sampleVariance = count > 1 ? M2 / (count - 1) : NaN;</div>
+      <p class="small">The update <code>M2 += delta * (x - mean)</code> is the numerically stable SS recurrence. The same function is used for every hacker’s trajectory below.</p>
+    </section>
+
+    <section class="card span12">
+      <h2>2. Sampling mean and variance</h2>
+      <p class="muted">Each hacker attempts n systems. Every attempt receives an independent score drawn from the same fixed distribution. We repeat this experiment for m hackers, then average their individual sample means and sample variances.</p>
+      <div class="grid" style="gap:12px">
+        <div class="span6">
+          <h3>Chosen score distribution</h3>
+          <div class="equation">X ∈ {0, 2, 4, 6, 8, 10}, &nbsp; P(X=x)=1/6</div>
+          <div class="stats">
+            <div class="stat"><div class="k">Theoretical mean μ</div><div class="v">5.0000</div><div class="sub">score points</div></div>
+            <div class="stat"><div class="k">Theoretical variance σ²</div><div class="v">11.6667</div><div class="sub">35/3</div></div>
+            <div class="stat"><div class="k">Fourth central moment μ₄</div><div class="v">235.6667</div><div class="sub">707/3</div></div>
+          </div>
+        </div>
+        <div class="span6">
+          <h3>How to read the experiment</h3>
+          <p class="conclusion">For each hacker j, calculate x̄<sub>j</sub> and s²<sub>j</sub> from that hacker’s n scores using Welford’s recurrence.</p>
+          <p class="conclusion">Across hackers, compare (1/m)Σx̄<sub>j</sub> with μ=5 and (1/m)Σs²<sub>j</sub> with σ²=35/3.</p>
+          <p class="small">The sample variance uses denominator n−1. This makes each s²<sub>j</sub>, and therefore their average, unbiased for σ².</p>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="field"><label for="mInput">Number of hackers (m)</label><input id="mInput" type="number" min="100" max="20000" step="100" value="3000"></div>
+        <div class="field"><label for="nInput">Systems per hacker (n values)</label><input id="nInput" type="text" value="5, 10, 20, 50, 100, 250"></div>
+        <div class="field"><label for="seedInput">Random seed (for reproducibility)</label><input id="seedInput" type="number" value="2026"></div>
+        <button id="runBtn" type="button">Run simulation</button>
+      </div>
+      <div class="note" id="status" aria-live="polite">Ready. The default run uses 3,000 hackers for each n value.</div>
+      <div class="tablewrap">
+        <table aria-label="Monte Carlo simulation results">
+          <thead><tr>
+            <th>n systems</th><th>Average of means</th><th>Target μ</th><th>Average of variances</th><th>Target σ²</th><th>SD of means<br>(empirical / theory)</th><th>SD of variances<br>(empirical / theory)</th>
+          </tr></thead>
+          <tbody id="resultsBody"><tr><td colspan="7" class="muted" style="text-align:center">Run the simulation to populate the results.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card span6">
+      <h2>Variability of the sampling means</h2>
+      <p class="muted">Across hackers, the empirical standard deviation of x̄ should follow the theoretical standard error σ/√n.</p>
+      <div class="chart" id="meanChart"><p class="small">Run the simulation to display the chart.</p></div>
+      <div class="legend"><span><i class="dot"></i>Empirical SD</span><span><i class="dot gold"></i>Theoretical σ/√n</span></div>
+    </section>
+    <section class="card span6">
+      <h2>Variability of the sample variances</h2>
+      <p class="muted">The sample variance is also random. Its theoretical standard deviation can be computed from the fourth central moment.</p>
+      <div class="chart" id="varianceChart"><p class="small">Run the simulation to display the chart.</p></div>
+      <div class="legend"><span><i class="dot"></i>Empirical SD</span><span><i class="dot gold"></i>Theoretical SD(s²)</span></div>
+    </section>
+
+    <section class="card span12">
+      <h2>What should you conclude?</h2>
+      <p class="conclusion"><strong>Center:</strong> the average of the hackers’ sample means estimates μ, and the average of their unbiased sample variances estimates σ². With finite m, the observed averages will not match the theoretical values exactly; their discrepancies are Monte Carlo error.</p>
+      <p class="conclusion"><strong>Increasing n:</strong> the variability of individual sample means decreases as σ/√n. The variability of the sample variances also decreases (asymptotically at a 1/√n rate). Thus estimates from longer trajectories are more concentrated around the population parameters.</p>
+      <p class="conclusion"><strong>Why this matters:</strong> inferential statistics uses sample statistics to learn about unknown population parameters. Understanding their sampling distributions quantifies estimation uncertainty and supports standard errors, confidence intervals, and hypothesis tests.</p>
+      <p class="small">The exact theoretical SD of the sample variance for this distribution is shown in the simulation table: SD(s²) = √{[μ₄ − ((n−3)/(n−1))σ⁴]/n}. The SD of the average across m hackers is smaller by a factor √m.</p>
+    </section>
+
+    <section class="card span12" id="theoretical-answers">
+      <div class="pdf-heading">
+        <div>
+          <h2>3. Theoretical answers (PDF)</h2>
+          <p class="muted">The written answers to the final theoretical questions are displayed below. Keep the PDF in the same folder as this HTML file.</p>
+        </div>
+        <a class="pdf-link" href="./HWK4_Theoretical_Answers.pdf" target="_blank" rel="noopener">Open / download PDF</a>
+      </div>
+      <iframe class="pdf-frame" src="./HWK4_Theoretical_Answers.pdf#view=FitH" title="HWK4 theoretical answers PDF">Your browser cannot display embedded PDFs. Use the “Open / download PDF” link above.</iframe>
+      <p class="small" role="status">The PDF is loaded from the separate file <code>HWK4_Theoretical_Answers.pdf</code> in this folder.</p>
+    </section>
+  </main>
+  <footer class="footer">HWK4 · Simulation and charts run locally in your browser. Keep this HTML file and HWK4_Theoretical_Answers.pdf in the same folder to view the theoretical answers below.</footer>
+</div>
+<script>
+'use strict';
+const MU = 5;
+const SIGMA2 = 35 / 3;
+const MU4 = 707 / 3;
+const SUPPORT = [0, 2, 4, 6, 8, 10];
+
+// Welford's one-pass algorithm. The state for one trajectory is (count, mean, M2).
+function welfordStats(values) {
+  let count = 0, mean = 0, M2 = 0;
+  for (const x of values) {
+    const delta = x - mean;
+    mean += delta / ++count;
+    M2 += delta * (x - mean);
+  }
+  return { count, mean, M2, sampleVariance: count > 1 ? M2 / (count - 1) : NaN };
+}
+
+// Small seeded PRNG so that the same seed reproduces the same experiment.
+function mulberry32(seed) {
+  let state = seed >>> 0;
+  return function() {
+    state += 0x6D2B79F5;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function sampleScore(rng) { return SUPPORT[Math.floor(rng() * SUPPORT.length)]; }
+function sampleSD(values) {
+  if (values.length < 2) return NaN;
+  const avg = values.reduce((a,b) => a+b, 0) / values.length;
+  const ss = values.reduce((a,b) => a + (b-avg)*(b-avg), 0);
+  return Math.sqrt(ss / (values.length - 1));
+}
+function theoreticalMeanSD(n) { return Math.sqrt(SIGMA2 / n); }
+function theoreticalVarianceSD(n) {
+  const varianceOfS2 = (MU4 - ((n - 3) / (n - 1)) * SIGMA2 * SIGMA2) / n;
+  return Math.sqrt(Math.max(0, varianceOfS2));
+}
+function fmt(x, digits=4) { return Number.isFinite(x) ? x.toFixed(digits) : '—'; }
+function parseNValues(raw) {
+  const ns = raw.split(',').map(s => Number(s.trim())).filter(Number.isFinite);
+  const unique = [...new Set(ns.map(Math.floor))].filter(n => n >= 2 && n <= 5000).sort((a,b)=>a-b);
+  if (!unique.length) throw new Error('Enter at least one integer n between 2 and 5,000, separated by commas.');
+  if (unique.length > 10) throw new Error('Use at most 10 different n values.');
+  return unique;
+}
+function simulate(m, ns, seed) {
+  const rng = mulberry32(seed);
+  const output = [];
+  for (const n of ns) {
+    const means = new Array(m);
+    const variances = new Array(m);
+    let sumMeans = 0, sumVariances = 0;
+    for (let h = 0; h < m; h++) {
+      let count = 0, mean = 0, M2 = 0;
+      for (let i = 0; i < n; i++) {
+        const x = sampleScore(rng);
+        const delta = x - mean;
+        mean += delta / ++count;
+        M2 += delta * (x - mean);
+      }
+      const s2 = M2 / (count - 1);
+      means[h] = mean;
+      variances[h] = s2;
+      sumMeans += mean;
+      sumVariances += s2;
+    }
+    output.push({
+      n,
+      avgMean: sumMeans / m,
+      avgVariance: sumVariances / m,
+      sdMeans: sampleSD(means),
+      sdVariances: sampleSD(variances),
+      theoryMeanSD: theoreticalMeanSD(n),
+      theoryVarianceSD: theoreticalVarianceSD(n)
+    });
+  }
+  return output;
+}
+function makeChart(rows, empiricalKey, theoreticalKey, ariaLabel) {
+  const W=520, H=250, L=52, R=18, T=16, B=42;
+  const vals = rows.flatMap(r => [r[empiricalKey], r[theoreticalKey]]).filter(Number.isFinite);
+  const max = Math.max(...vals, 0.0001) * 1.18;
+  const x = i => L + (rows.length === 1 ? (W-L-R)/2 : i*(W-L-R)/(rows.length-1));
+  const y = v => H-B - (v/max)*(H-T-B);
+  const makePath = key => rows.map((r,i) => `${i===0?'M':'L'} ${x(i).toFixed(1)} ${y(r[key]).toFixed(1)}`).join(' ');
+  const ticks = [0,.25,.5,.75,1].map(f => {
+    const yy = y(max*f);
+    return `<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="#2c3d55" stroke-width="1"/><text x="${L-8}" y="${yy+4}" fill="#a9b8cb" font-size="10" text-anchor="end">${(max*f).toFixed(1)}</text>`;
+  }).join('');
+  const xlabels = rows.map((r,i)=>`<text x="${x(i)}" y="${H-17}" fill="#a9b8cb" font-size="10" text-anchor="middle">${r.n}</text>`).join('');
+  const dots = key => rows.map((r,i)=>`<circle cx="${x(i)}" cy="${y(r[key])}" r="3.6" fill="${key===empiricalKey?'#55d6be':'#f5c76b'}"/>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${ariaLabel}">${ticks}<path d="${makePath(theoreticalKey)}" fill="none" stroke="#f5c76b" stroke-width="2.5" stroke-dasharray="6 5"/><path d="${makePath(empiricalKey)}" fill="none" stroke="#55d6be" stroke-width="2.8"/>${dots(theoreticalKey)}${dots(empiricalKey)}${xlabels}<text x="${(L+W-R)/2}" y="${H-2}" fill="#a9b8cb" font-size="10" text-anchor="middle">systems per hacker (n)</text></svg>`;
+}
+function render(rows) {
+  const body = document.getElementById('resultsBody');
+  body.innerHTML = rows.map(r => `<tr>
+    <td><strong>${r.n}</strong></td>
+    <td>${fmt(r.avgMean)}</td><td class="target">${fmt(MU)}</td>
+    <td>${fmt(r.avgVariance)}</td><td class="target">${fmt(SIGMA2)}</td>
+    <td>${fmt(r.sdMeans)} / ${fmt(r.theoryMeanSD)}</td>
+    <td>${fmt(r.sdVariances)} / ${fmt(r.theoryVarianceSD)}</td>
+  </tr>`).join('');
+  document.getElementById('meanChart').innerHTML = makeChart(rows,'sdMeans','theoryMeanSD','Empirical and theoretical standard deviation of sample means');
+  document.getElementById('varianceChart').innerHTML = makeChart(rows,'sdVariances','theoryVarianceSD','Empirical and theoretical standard deviation of sample variances');
+}
+function run() {
+  const btn = document.getElementById('runBtn');
+  const status = document.getElementById('status');
+  try {
+    const m = Math.floor(Number(document.getElementById('mInput').value));
+    const seed = Math.floor(Number(document.getElementById('seedInput').value));
+    if (!Number.isFinite(m) || m < 100 || m > 20000) throw new Error('Set m between 100 and 20,000.');
+    if (!Number.isFinite(seed)) throw new Error('Enter a valid integer seed.');
+    const ns = parseNValues(document.getElementById('nInput').value);
+    btn.disabled = true; btn.textContent = 'Simulating…';
+    status.textContent = `Running ${m.toLocaleString()} hackers for n = ${ns.join(', ')}…`;
+    // Defer calculation one event-loop turn so the button/status update is painted.
+    setTimeout(() => {
+      try {
+        const rows = simulate(m, ns, seed);
+        render(rows);
+        status.textContent = `Completed: ${m.toLocaleString()} hackers × ${ns.length} n-values (seed ${seed}). Change m, n, or the seed and run again.`;
+      } catch (err) { status.textContent = err.message; }
+      finally { btn.disabled = false; btn.textContent = 'Run simulation'; }
+    }, 20);
+  } catch(err) { status.textContent = err.message; }
+}
+document.getElementById('runBtn').addEventListener('click', run);
+run();
+</script>
+
+</body>
+</html>
